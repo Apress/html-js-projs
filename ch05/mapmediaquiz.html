@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Map Quiz </title>
+<meta charset="UTF-8">
+<style>
+header {font-family:Georgia,"Times New Roman",serif;
+	font-size:20px;
+	display:block;
+}
+video {display:none; position:absolute; top: 60px; right: 20px;
+}
+audio {display:none; position:absolute; top: 60px; right: 20px;}
+canvas {position:relative; top:60px}
+#answer {position:relative; font-family:Georgia, "Times New Roman", Times, serif; font-size:16px;}
+
+</style>
+<script type="text/javascript" charset="UTF-8" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<script type="text/javascript" src="mediaquizcontent.js"> </script>
+<script type="text/javascript" charset="UTF-8">
+var listener;
+var map;
+
+var myOptions;		
+var ctx;
+var blatlng;
+var content = [];
+
+var answer;
+var v;
+var audioel;
+var videotext1 = "<video id=\"XXXX\" loop=\"loop\" preload=\"auto\" controls=\"controls\" width=\"400\"><source src=\"XXXX.webmpv8.webm\" type=\'video/webm\'>";
+
+var videotext2="<source src=\"XXXX.theora.ogv\" type=\'video/ogg\'>  <source src=\"XXXX.mp4\"  type=\'video/mp4\'>";
+
+var videotext3="Your browser does not accept the video tag.</video>";
+
+var audiotext1="<audio id=\"XXXX\" controls=\"controls\" preload=\"preload\"><source src=\"XXXX.ogg\" type=\"audio/ogg\" />";
+var audiotext2="<source src=\"XXXX.mp3\" type=\"audio/mpeg\" /><source src=\"XXXX.wav\" type=\"audio/wav\" /></audio>";
+
+var nextquestion = -1;
+
+function init() {
+  ctx = document.getElementById("canvas").getContext('2d');
+    answer = document.getElementById("answer");
+	header = document.getElementById("header");
+  loadcontent(); 
+  asknewquestion();  
+}
+function asknewquestion() {
+	nextquestion++;
+	if (nextquestion<questions.length) {
+		header.innerHTML=questions[nextquestion];
+		
+	}
+	else {
+		header.innerHTML="No more questions.";
+		
+	}
+}
+function loadcontent() {
+	var divelement;
+	
+	makemap(base[0],base[1]);
+	var videomarkup;
+	var videoreference;
+	var audiomarkup;
+	var audioreference;
+	var imageobj;
+	var name;
+	var savedimagefilename;
+	
+	for (var i=0;i<precontent.length;i++) {
+		content.push(precontent[i]);
+		name = precontent[i][4];
+		switch (precontent[i][3]) {
+		case "video": 
+			divelement= document.createElement("div");
+			
+			videomarkup = videotext1+videotext2+videotext3;
+			videomarkup = videomarkup.replace(/XXXX/g,name);
+ 			divelement.innerHTML = videomarkup;
+ 			document.body.appendChild(divelement);
+			
+			videoreference = document.getElementById(name);
+			content[i][4] = videoreference;
+			break;
+		case "pictureaudio":
+			divelement = document.createElement("div");
+			
+			audiomarkup = audiotext1+audiotext2;
+			audiomarkup = audiomarkup.replace(/XXXX/g,name);
+			divelement.innerHTML = audiomarkup;
+			document.body.appendChild(divelement);
+			
+			audioreference = document.getElementById(name);
+			savedimagefilename = content[i][5];
+			content[i][5] = audioreference;
+			imageobj = new Image();
+			imageobj.src= savedimagefilename;
+			content[i][4] = imageobj;
+			break;
+		case "picture":
+			imageobj = new Image();
+			imageobj.src= precontent[i][4];
+			content[i][4] = imageobj;
+			break;
+		}
+	}
+
+   
+}
+
+
+
+
+
+  
+
+
+var rxmarker = "rx1.png";
+var bxmarker = "bx1.png";
+function makemap(mylat,mylong) {
+	var marker;
+ blatlng = new google.maps.LatLng(mylat,mylong);
+   
+ myOptions = {
+	  zoom: zoomlevel,
+      center: blatlng,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      
+	  //disableDefaultUI: true
+    };
+map = new google.maps.Map(document.getElementById("place"), myOptions);
+//mark center
+marker = new google.maps.Marker({
+									 position: blatlng,
+									 title: "center",
+									 icon: rxmarker,
+									 map: map });
+
+
+
+	listener = google.maps.event.addListener(map, 'click', function(event) {
+			checkit(event.latLng);
+			});
+
+}
+function eraseold() {
+	if (v != undefined) {
+	v.pause();
+	    v.style.display = "none";  //erases last video played
+	}
+	if (audioel != undefined) {
+	 audioel.pause();
+	 audioel.style.display = "none";  //erase controls for last audio played
+	}
+	ctx.clearRect(0,0,300,300);
+	
+}
+function checkit(clatlng) {
+	var marker;
+	var latlnga =new google.maps.LatLng(content[nextquestion][0],content[nextquestion][1]);
+	
+	var distance = dist(clatlng,latlnga);	
+    eraseold();
+    marker = new google.maps.Marker({
+									 position: clatlng,
+									 title: "Your answer",
+									  icon: bxmarker,
+									 map: map });	
+	
+		if (distance<maxdistance) {
+	
+
+	switch (content[nextquestion][3]) {
+	  case "video":
+		answer.innerHTML=content[nextquestion][2];
+		ctx.clearRect(0,0,400,400);
+		
+		v = content[nextquestion][4];
+		v.style.display="block";
+		v.currentTime = 0;
+		v.play();
+		
+		break;
+	  case "picture":
+	  case "pictureaudio":
+		answer.innerHTML=content[nextquestion][2];
+		ctx.clearRect(0,0,400,400);
+		var img1 = content[nextquestion][4];	
+		var iw = img1.width;
+		var ih = img1.height;
+		var aspect = iw/ih;
+		if (iw>=ih) {
+            if (iw>400){
+            	tw = 400;
+            	th = 400/aspect;
+            }
+            else {
+            	tw = iw;
+            	th = ih;
+            }
+		}
+		else {
+			if (ih>400){
+				th = 400;
+				tw = 400*aspect;
+			}
+			else {
+				th = ih;
+				tw = iw;
+			}
+		}
+		ctx.drawImage(img1,0,0,iw,ih,0,0,tw,th);
+		
+		
+		if (content[nextquestion][3]=="picture") {
+			break;}
+		else {
+		audioel = content[nextquestion][5];
+		audioel.style.display="block";
+		audioel.currentTime = 0;
+		audioel.play();
+		
+		break;
+		}
+		
+	}
+	  asknewquestion();
+	}
+	else {
+		answer.innerHTML= "Not close enough to the location.";
+	}
+}
+ function dist(point1, point2) {
+	  //spherical law of cosines
+	  var R = 6371; // km
+	  //var R =  3959; // miles
+	  var lat1 = point1.lat()*Math.PI/180;
+	  var lat2 = point2.lat()*Math.PI/180 ;
+	  var lon1 = point1.lng()*Math.PI/180;
+	  var lon2 = point2.lng()*Math.PI/180;
+
+var d = Math.acos(Math.sin(lat1)*Math.sin(lat2) +
+                  Math.cos(lat1)*Math.cos(lat2) *
+                  Math.cos(lon2-lon1)) * R;
+    return d;
+
+  }
+function giveup() {
+	makemap(content[nextquestion][0],content[nextquestion][1]);
+	eraseold();
+	answer.innerHTML="Click at red x to finish this question.";
+}
+
+</script>
+</head>
+<body onLoad="init();">
+<header id="header">Click</header>
+
+<div id="place" style="float: left;width:50%; height:400px"></div>
+<button onClick="giveup();">Hint? </button>
+<div style="float: right;width:30%;height:400px">
+<div id="answer">Starting location </div>
+<p>  </p>
+
+
+
+
+
+<canvas id="canvas" width="400" height="400" >
+Your browser doesn't recognize canvas
+</canvas>
+</div>
+
+</body>
+</html>

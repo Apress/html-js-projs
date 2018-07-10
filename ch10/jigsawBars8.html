@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+ <meta charset="UTF-8"> 
+<head>
+    <title>Jigsaw Monkey bars
+    </title>
+<meta name="viewport" 
+content="width=device-width, user-scalable=yes, initial-scale=1.0, minimum-scale=1.0, maximum-scale=2.0" />
+
+
+<style>
+#base {position:absolute; border:none; visibility: hidden; }
+form {position: absolute; z-index: 200;}
+body
+{
+	height:100%;
+	margin: 30px;
+}
+video {display:none; position:absolute; z-index: 100; } 
+
+
+</style>
+
+<script type="text/javascript">
+
+var pieces = [];
+var nums;
+var baseImgW;
+var baseImgH;
+var origW;
+var origH;
+var opieceW;
+var opieceH;
+var pieceW;
+var pieceH;
+var numOfRows = 2.0;
+var numOfCols = 3.0;
+var piecesx = [ ];
+  
+var piecesy = [ ];	
+var v;
+var base;
+var doingjigsaw = false;
+var firstpkel;  //assumption that first piece in array is upper left corner.
+
+
+var questionfel;
+
+var d = document;
+
+var mouseDown = false;
+
+var movingobj;
+
+
+
+function init(){
+  
+   v = document.getElementById("bars");
+   base = document.getElementById("base");
+   makePieces();
+   nums = pieces.length;
+   questionfel = document.getElementById("questionform");
+   questionfel.style.left = "20px";
+   questionfel.style.top = "600px";
+   questionfel.submitbut.value = "Do jigsaw again.";
+   setupGame();    
+}
+
+function makePieces() {
+	var i;
+	var x;
+	var y;
+	var s;
+	var sRef; 
+	origW = base.width;
+	origH = base.height;
+	//what is critical dimension
+	var ratio =Math.min(1.0,.80*window.innerWidth/origW,.80*window.innerHeight/origH);
+    baseImgW = origW*ratio;
+    baseImgH = origH*ratio;
+	v.width = baseImgW;
+    v.height =baseImgH;
+	opieceW = origW/numOfCols;
+	opieceH = origH/numOfRows;
+	pieceW = ratio*opieceW;
+	pieceH = ratio*opieceH;
+    
+	for(i=0.0;i<numOfRows;i++) {
+	  for (j=0.0;j<numOfCols;j++) {	
+		s = document.createElement('canvas');
+		s.width = pieceW;
+		s.height = pieceH;
+		s.style.position = 'absolute';
+		sCTX = s.getContext('2d'); 
+
+		sCTX.drawImage(base,j*opieceW,i*opieceH,opieceW,opieceH,0,0,pieceW,pieceH);
+
+		document.body.appendChild(s);
+
+		pieces.push(s);
+		x = j*pieceW +100;
+		y = i*pieceH +100;
+		s.style.top = String(y)+"px";
+		s.style.left = String(x)+"px";
+		piecesx.push(x);
+		piecesy.push(y);
+        s.addEventListener('mousedown',startdragging,false);
+        s.addEventListener("touchstart", touchHandler, true);
+        s.addEventListener("touchmove", touchHandler, true);
+        s.addEventListener("touchend", touchHandler, true);
+        s.addEventListener("touchcancel", touchHandler, true);
+		s.style.visibility='visible';
+	  }
+	}
+	firstpkel = pieces[0];
+	document.body.onmouseup = release;  //confirms release of mouse button. prevents problem of one piece under another
+}
+
+function endjigsaw() {
+	var df;
+	if (doingjigsaw) {
+		doingjigsaw = false;
+		 d.onmousedown = "";
+         d.onmousemove = "";
+         d.onmouseup = "";
+        
+	    v.pause();
+		v.style.display = "none";
+	}
+    setupGame();
+	return false;
+	
+}
+
+
+function checkpositions() {
+	var i;
+	var x;
+	var y;
+	var tolerance = 10;
+	var deltax = [];
+	var deltay = [];
+	var delx;
+	var dely;
+	for (i=0;i<nums;i++) {  
+	  x = pieces[i].style.left;
+	  y = pieces[i].style.top;
+	  x = x.substr(0,x.length-2); // remove px
+	  y = y.substr(0,y.length-2);
+	  x = Number(x);
+	  y = Number(y);
+	  delx = x - piecesx[i];
+	  dely = y - piecesy[i];
+	  deltax.push(delx);
+	  deltay.push(dely);
+	}
+	var averagex = doaverage(deltax);
+	var averagey = doaverage(deltay);
+	//check if any delta (x or y) is more than tolerance from average
+	for (i=0;i<nums;i++) {
+		if ((Math.abs(averagex - deltax[i])>tolerance) || (Math.abs(averagey-deltay[i])>tolerance)) {
+			break;
+		}
+	}
+	if (i<nums) {
+		questionfel.feedback.value = "Keep working.";
+	}
+	else {
+		
+		questionfel.feedback.value = "GOOD!";
+		for (i=0;i<nums;i++) {
+			pieces[i].style.display = "none";
+			
+		}
+		v.style.left = firstpkel.style.left;
+		v.style.top = firstpkel.style.top;
+		v.style.display="block";
+		v.currentTime = 0;
+		v.play();
+	}
+}
+
+function doaverage(arr) {
+	var sum;
+	var i;
+	var n = arr.length;
+	sum = 0;
+	for(i=0;i<n;i++) {
+	   sum += arr[i];
+	}
+	return (sum/n);
+}
+
+function setupGame() {
+	v.pause();
+	v.style.display = "none";
+  doingjigsaw = true;
+	
+  var i;
+  var x;
+  var y;
+  var thingelem;
+    for (i=0;i<nums;i++) {	
+		x = 10+Math.floor(Math.random()*baseImgW*.9);
+		y = 50+Math.floor(Math.random()*baseImgH*.9);
+		thingelem = pieces[i];
+		thingelem.style.top = String(y)+"px";
+		thingelem.style.left = String(x)+"px";
+		thingelem.style.visibility='visible';
+		thingelem.style.display="inline";
+
+     }
+  
+
+	
+	questionfel.feedback.value = "  ";
+	
+}
+
+function touchHandler(event)
+{
+    var touches = event.changedTouches;
+	if (touches.length>1) {
+		return false;
+	}
+   var first = touches[0];
+    var type = "";
+         switch(event.type)
+    {
+        case "touchstart": type = "mousedown"; break;
+        case "touchmove":  type="mousemove"; break;        
+        case "touchend":   type="mouseup"; break;
+        default: return;
+    }
+ 
+  var simulatedEvent = new MouseEvent(type,{
+     
+    // cancelable: true,
+    // detail:1,
+     screenX: first.screenX,
+     screenY: first.screenY,
+     clientX: first.clientX,
+     clientY: first.clientY
+
+  });
+
+
+    first.target.dispatchEvent(simulatedEvent);
+    event.preventDefault();
+}
+
+
+
+
+
+// we let go
+function release(e){
+	mouseDown = false;
+	movingobj.removeEventListener("mousemove",moving,false);
+	movingobj.removeEventListener("mouseup",release,false);
+	movingobj=null;
+	checkpositions();
+};
+ 
+// only move image (set mouseDown = true) when inside image
+function startdragging(e)
+{   
+	
+	
+	movingobj = e.target;
+    
+    mouseDown = true;
+    oldx = parseInt(e.pageX);
+    oldy = parseInt(e.pageY);
+    movingobj.addEventListener("mousemove",moving,false);
+    movingobj.addEventListener("mouseup",release,false);
+};
+ 
+function moving(ev)
+{
+
+	
+  if((movingobj!=null) &&(mouseDown)){
+   newx = parseInt(ev.pageX);
+   newy = parseInt(ev.pageY);
+   delx = newx-oldx;
+   dely = newy-oldy;
+   oldx = newx;
+   oldy = newy;
+   curx = parseInt(movingobj.style.left);
+   cury = parseInt(movingobj.style.top);
+   movingobj.style.left = String(curx+delx)+"px";
+   movingobj.style.top = String(cury+dely)+"px";
+   
+   
+   
+ }
+};
+ 
+</script>
+
+</head>
+<body id="body" onLoad="init();">  
+
+
+
+
+<h2> Monkey bars</h2>
+
+<form id="questionform" name="questionform" onSubmit="return endjigsaw();" >
+
+<input name="submitbut" type="submit" value="       " size="30"/>
+
+Feedback: <input name="feedback" value="   " size="11" />
+</form>
+<video id="bars" controls="controls"  preload="auto" width="800"> 
+	 <source src="monkeybars.mp4" > 
+	 <source src="monkeybars.webm" > 
+     <source src="monkeybars.ogg" > 
+ 
+Your browser does not accept the video tag.
+</video>
+<img src="barsBase.png" id="base" width="800px" height="420px"/>
+</p>
+</body>
+</html>

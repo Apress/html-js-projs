@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Origami frog</title>
+<style>
+button {font-size:large; font-family:Georgia, "Times New Roman", Times, serif;}
+#directions {font-family:"Comic Sans MS", cursive;}
+</style>
+<script>
+var ctx;
+var ta;
+var buscardw = 2.0;
+var buscardh = 3.5;
+var i2p = 72;
+var dashlen = 8;
+var dgap = 2.0;
+var ddashlen = 6.0;
+var ddot = 2.0;
+var dratio = dashlen/(dashlen+dgap);
+var ddtotal = ddashlen+3*ddot;
+var ddratio1 = ddashlen/ddtotal;
+var ddratio2 = (ddashlen+ddot)/ddtotal;
+var ddratio3 = (ddashlen+2*ddot)/ddtotal;
+var busx = 10;
+var busy = 10;
+var nextstep;
+function dist(x1,y1,x2,y2) {
+	var x = x2-x1;
+	var y = y2-y1;
+	return Math.sqrt(x*x+y*y);	
+}
+//specific to frog
+var steps= [
+	[directions,"Diagram conventions"],
+    [makebuscard,"Start with a business card..."],
+	[adiagonal1p,"...make a diagonal fold."],
+	[diagonal1,"Unfold last fold."],
+	[adiagonal1," you see one valley fold."],
+	[adiagonal2p,"Now make the opposite diagonal"],
+	[diagonal2,"Unfold last fold."],
+	[adiagonal2, "Turn over."],
+	[turnedover,"You see two mountain folds."],
+	[unfoldedp,"Bring top to ends of x to make valley at waist of X."],
+	[topdown,"Unfold last fold."],
+	[unfolded,"Press sides in to collapse into arrow..."],
+	[collapsing,"keep pressing."],
+	[arrow,"Turn over."],
+	[arrowunder,"Now to make the front legs"],
+	[prerightleg,"Turn up right flap to form leg ( this is to taste)."],
+	[preleftleg,"Turn up left flap to match."],
+	[makeleftleg,"Both front legs made."],
+	[prethinned,"Fold in sides to make frog body thinner (to taste)."],
+	[thinned,"Two more folds to go. These are soft folds."],
+	[thinned1,"Fold bottom up to top, soft crease."],
+	[foldedup,"Folded up. One more fold."],
+	[foldback,"Fold bottom back down to fold you just made, soft crease."],
+	[doneupsidedown,"Turn over ..."],
+	[showfrogpicture,"and stroke back to make frog jump!"]
+	];
+var ax = busx;
+var ay = busy;
+var bx = busx + buscardw*i2p;
+var by = busy;
+var cx = bx;
+var cy = busy + buscardw*i2p;
+var dx = bx;
+var dy = busy + buscardh*i2p;
+var ex = ax;
+var ey = dy;
+var fx = ax;
+var fy = cy;
+var hx = ax;
+var hy = ay + buscardw*i2p*.5;
+var ix = ax + buscardw*i2p;
+var iy = hy;
+
+var ease = .25 * (hy-ay);
+var aex = ax;
+var aey = ay+ease;
+var bex = bx;
+var bey = ay + ease;
+var hex = hx + ease;
+var hey = hy + ease;
+var iex = ix - ease;
+var iey = iy + ease;
+var midx = ax + buscardw*i2p*.5;
+var midy = ay + buscardw*i2p*.5;
+var gx = midx;
+var gy = fy;
+var rightleg = proportion(cx,cy,midx,midy,.33);
+var leftleg = proportion(fx,fy,midx,midy,.33);
+var rlx = rightleg[0];
+var rly = rightleg[1];
+var llx = leftleg[0];
+var lly = leftleg[1];
+var jy = midy + .5* (ey-midy);
+var frog = new Image();
+frog.src="frog.jpg";
+
+function proportion(x1,y1,x2,y2,p) {
+	var xs = x2-x1;
+	var ys = y2-y1;
+	var x = x1+ p*xs;
+	var y = y1 + p* ys;
+	return ([x,y]);	
+}
+function prerightleg() {
+	arrowunder();
+	valley(gx,gy,rlx,rly,"green");
+}
+function makerightleg() {  //right leg from underneath
+	arrowunder();
+	ctx.beginPath();
+	ctx.moveTo(gx,gy);
+	ctx.lineTo(rlx,rly);
+	var legpoint = uselawofsines(gx,gy,rlx,rly,cx,cy,1);
+	ctx.lineTo(legpoint[0],legpoint[1]);
+	ctx.lineTo(midx,fy); 
+	ctx.closePath();
+	
+	ctx.fill();
+	ctx.stroke();
+	
+}
+function preleftleg() {
+	makerightleg();
+	valley(gx,gy,llx,lly,"green");
+}
+function makeleftleg() {
+	makerightleg();
+	ctx.beginPath();
+	ctx.moveTo(gx,gy);
+	ctx.lineTo(llx,lly);
+	var legpoint = uselawofsines(gx,gy,llx,lly,fx,fy,-1);
+	
+	ctx.lineTo(legpoint[0],legpoint[1]);
+	ctx.lineTo(gx,gy); 
+	ctx.closePath();
+	ctx.fill();
+	ctx.stroke();
+}
+function uselawofsines(gx,gy, ux,uy,ox,oy,dir) {
+	var d = dist(gx,gy,ox,oy);
+	var sinea = (Math.sin(Math.PI/4)/dist(gx,gy,ux,uy))*dist(ux,uy,ox,oy);
+	var angle = 2*Math.asin(sinea);
+	var nx = gx+ dir*d*Math.cos(angle);
+	var ny = gy - d*Math.sin(angle);
+	return ([nx,ny]);	
+}
+function prethinned() {
+	makeleftleg();
+	valley(llx,lly,llx,ey,"green");
+	valley(rlx,rly,rlx,dy,"green");
+}
+function thinned() {
+	makeleftleg() 
+	ctx.clearRect(ax-ease,lly,llx-(ax-ease),ey-ay);	
+	ctx.clearRect(rlx,rly,bx+ease-rlx,dy-by);
+	ctx.beginPath();
+	ctx.moveTo(llx,lly);
+	ctx.lineTo(llx+.5*(gx-llx),gy);
+	ctx.lineTo(llx+.5*(gx-llx),ey);
+	ctx.lineTo(llx,ey);
+	ctx.lineTo(llx,lly);	
+	ctx.moveTo(rlx,rly);
+	ctx.lineTo(rlx-.5*(rlx-gx),gy);
+	ctx.lineTo(rlx-.5*(rlx-gx),ey);
+	ctx.lineTo(rlx,dy);
+	ctx.lineTo(rlx,rly);
+	ctx.fill();	
+	ctx.stroke();	
+}
+function doneupsidedown() {
+	thinned();
+	ctx.clearRect(llx-ease,lly,2*ease+ rlx-llx, ease +dy-lly);
+	
+	ctx.beginPath();
+	ctx.moveTo(llx,lly);
+	ctx.lineTo(rlx,rly);
+	ctx.lineTo(rlx,jy);
+	ctx.lineTo(llx,jy);
+	ctx.lineTo(llx,lly);
+	ctx.closePath();
+	ctx.fill();
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.moveTo(llx+.5*(gx-llx),lly);
+	ctx.lineTo(llx+.5*(gx-llx),jy);
+	ctx.moveTo(rlx-.5*(rlx-gx),rly);
+	ctx.lineTo(rlx-.5*(rlx-gx),jy);
+	ctx.closePath();
+	ctx.stroke();
+	
+}
+function foldback() {
+	foldedup();
+	valley(llx,midy+.5*(jy-midy),rlx,midy+.5*(jy-midy),"green");
+	
+}
+function thinned1() {
+	thinned();
+	valley(llx,jy,rlx,jy,"green");
+	
+}
+function foldedup() {
+	ctx.beginPath();
+	ctx.moveTo(llx,midy);
+	ctx.lineTo(rlx,midy);
+	ctx.lineTo(rlx,jy);
+	ctx.lineTo(llx,jy);
+	ctx.lineTo(llx,midy);
+	ctx.closePath();
+	ctx.fill();
+	ctx.stroke();
+}
+function showfrogpicture() {
+  ctx.drawImage(frog,40,40);
+
+
+}
+function makebuscard() {
+ctx.strokeRect(busx,busy,buscardw*i2p,buscardh*i2p);	
+}
+function diagonal1 () {
+	ctx.beginPath();
+	ctx.moveTo(bx,by);
+	ctx.lineTo(cx,cy);
+	ctx.lineTo(dx,dy);
+	ctx.lineTo(ex,ey);
+	ctx.lineTo(fx,fy);
+	ctx.lineTo(bx,by);
+	ctx.moveTo(fx,fy);
+	ctx.lineTo(cx,cy);
+	ctx.closePath();
+	ctx.stroke();	
+}
+function diagonal2 () {
+	ctx.beginPath();
+	ctx.moveTo(ax,ay);
+	ctx.lineTo(cx,cy);
+	ctx.lineTo(dx,dy);
+	ctx.lineTo(ex,ey);
+	ctx.lineTo(fx,fy);
+	ctx.lineTo(ax,ay);
+	ctx.moveTo(fx,fy);
+	ctx.lineTo(cx,cy);
+	ctx.closePath();
+	ctx.stroke();	
+}
+function adiagonal1() {
+	makebuscard();
+	skinnyline(bx,by,fx,fy);
+}
+function adiagonal2() {
+	adiagonal1();
+	skinnyline(ax,ay,cx,cy);
+}
+function adiagonal1p() {
+	makebuscard();
+	valley(bx,by,fx,fy,"green");
+}
+function adiagonal2p() {
+	adiagonal1();
+	valley(ax,ay,cx,cy,"green");
+}
+function turnedover () {
+	makebuscard();
+	mountain(ax,ay,cx,cy);
+	mountain(bx,by, fx, fy);
+}
+function topdown () {
+	ctx.beginPath();
+	ctx.moveTo(hx,hy);
+	ctx.lineTo(ix,iy);
+	ctx.lineTo(dx,dy);
+	ctx.lineTo(ex,ey);
+	ctx.lineTo(hx,hy);
+	ctx.moveTo(fx,fy);
+	ctx.lineTo(cx,cy);
+	ctx.closePath();
+	ctx.stroke();
+}
+function unfolded() {
+	turnedover();
+	valley(hx,hy,ix,iy);
+	
+}
+function unfoldedp() {
+	turnedover();
+	valley(hx,hy,ix,iy,"green");
+	
+}
+function collapsing () {
+	ctx.beginPath();
+	ctx.moveTo(aex,aey);
+	ctx.lineTo(bex,bey);
+	ctx.lineTo(iex,iey);
+	ctx.lineTo(cx,cy);
+	ctx.lineTo(dx,dy);
+	ctx.lineTo(ex,ey);
+	ctx.lineTo(fx,fy);
+	ctx.lineTo(hex,hey);
+	ctx.lineTo(aex,aey);
+	ctx.closePath();
+	ctx.stroke();
+	mountain(aex,aey,midx,midy);
+	mountain(midx,midy,bex,bey);
+	mountain(midx,midy, fx,fy);
+	mountain(midx,midy, cx,cy);
+	valley(hex,hey,midx,midy);
+	valley(midx,midy,iex,iey);	
+}
+function arrow() {
+	ctx.beginPath();
+	ctx.moveTo(midx,midy);
+	ctx.lineTo(cx,cy);
+	ctx.lineTo(dx,dy);
+	ctx.lineTo(ex,ey);
+	ctx.lineTo(fx,fy);
+	ctx.lineTo(midx,midy);
+	ctx.closePath();
+	ctx.stroke();
+}
+function arrowunder() {
+	ctx.beginPath();
+	ctx.moveTo(midx,midy);
+	ctx.lineTo(cx,cy);
+	ctx.lineTo(dx,dy);
+	ctx.lineTo(ex,ey);
+	ctx.lineTo(fx,fy);
+	ctx.lineTo(midx,midy);
+	ctx.moveTo(fx,fy);
+	ctx.lineTo(cx,cy);
+	ctx.closePath();
+	ctx.stroke();
+}
+
+// end specific to frog
+
+var origwidth = 2;
+function init() {
+ctx = document.getElementById("canvas").getContext("2d");
+ta = document.getElementById("directions");
+ctx.font = "15px Georgia, Times, serif";
+
+ctx.fillStyle = "white";
+origstyle = ctx.strokeStyle;
+ctx.lineWidth = origwidth;
+nextstep = 0;
+donext();
+}
+function directions() {
+	ctx.fillStyle = "black";
+	ctx.fillText("Make valley fold", 10,20);
+	valley(200,18,300,18,"green");
+	ctx.fillText("Make mountain fold",10,50);
+	mountain(200,48,300,48,"green");
+	ctx.fillText("unfolded fold line",10,100);
+	skinnyline(200,98,300,98);
+	ctx.fillText("When sense of fold matters:",10,150);
+	ctx.fillText("unfolded valley fold", 10,180);
+	valley(200,178,300,178);
+	ctx.fillText("unfolded mountain fold",10,210);
+	mountain(200,208,300,208);
+	ctx.fillStyle = "white";	
+}
+function donext() {
+	if (nextstep>=steps.length) {
+		nextstep=steps.length-1;
+	}
+	
+	ctx.clearRect(0,0,900,400);
+	ctx.lineWidth = origwidth;
+	steps[nextstep][0]();
+	ta.innerHTML = steps[nextstep][1];
+	nextstep++;
+}
+function goback() {
+	nextstep = nextstep -2;
+	if (nextstep<0) {
+	     nextstep = 0;
+	}
+	donext();
+}
+function skinnyline(x1,y1,x2,y2) {
+	ctx.lineWidth = 1;
+	ctx.beginPath();
+	ctx.moveTo(x1,y1);
+	ctx.lineTo(x2,y2);
+	ctx.closePath();
+	ctx.stroke();	
+	ctx.lineWidth = origwidth;
+}
+
+
+function solidline(x1,y1,x2,y2) {
+	ctx.beginPath();
+	ctx.moveTo(x1,y1);
+	ctx.lineTo(x2,y2);
+	ctx.closePath();
+	ctx.stroke();
+}
+var origstyle;
+function valley(x1,y1,x2,y2,color) {
+	var px=x2-x1;
+	var py = y2-y1;
+	var len = dist(x1,y1,x2,y2);
+	var nd = Math.floor(len/(dashlen+dgap));
+	var xs = px/nd;
+	var ys = py/nd;
+	if (color) ctx.strokeStyle = color;
+	ctx.beginPath();
+	for (var n=0;n<nd;n++) {
+		ctx.moveTo(x1+n*xs,y1+n*ys);
+		ctx.lineTo(x1+n*xs+dratio*xs,y1+n*ys+dratio*ys);
+	}
+	ctx.closePath();
+	ctx.stroke();
+	ctx.strokeStyle = origstyle;
+}
+function mountain(x1,y1,x2,y2,color) {
+	
+	var px=x2-x1;
+	var py = y2-y1;
+	var len = dist(x1,y1,x2,y2);
+	var nd = Math.floor(len/ddtotal);
+	
+	var xs = px/nd;
+	var ys = py/nd;
+	if (color) ctx.strokeStyle = color;
+	ctx.beginPath();
+	for (var n=0;n<nd;n++) {
+		ctx.moveTo(x1+n*xs,y1+n*ys);
+		ctx.lineTo(x1+n*xs+ddratio1*xs,y1+n*ys+ddratio1*ys);
+		ctx.moveTo(x1+n*xs+ddratio2*xs,y1+n*ys+ddratio2*ys);
+		ctx.lineTo(x1+n*xs+ddratio3*xs,y1+n*ys+ddratio3*ys);
+		
+	}
+	ctx.closePath();
+	ctx.stroke();
+	ctx.strokeStyle = origstyle;
+}
+
+
+
+
+</script>
+</head>
+
+<body onload="init();">
+<canvas id="canvas" width="900" height="400">
+Your browser does not recognize the canvas element 
+</canvas>
+<br/>
+<div id="directions"> Press buttons to advance or go back </div>
+<hr/>
+<button onClick="goback();" style="color: #F00">Go back </button> 
+<button onClick="donext();" style="color: #03F">Next step </button>
+</body>
+</html>

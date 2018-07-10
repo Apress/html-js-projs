@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>USA States game</title>
+<style>
+img {position:absolute; 
+}
+form {position: absolute; z-index: 10;}
+body
+{
+	height:100%;
+	margin: 0;
+}
+ #fullpage
+{
+	display:block;
+	position:absolute;
+	top:0;
+	left:0;
+	width:100%;
+	height:90%;
+	overflow: hidden;
+	z-index: 1;
+}
+</style>
+<script type="text/javascript">
+var names = [
+  "Illinois","Iowa","Missouri","Oregon","Michigan",
+  "Indiana","Vermont","New Hampshire","Maine","South Dakota","North Dakota",
+  "Ohio","Wisconsin","Kentucky","Tennessee",
+  "North Carolina","South Carolina","Georgia","Alabama","Mississippi",
+  "Virginia","West Virginia","Maryland","Delaware","Pennsylvania","New Jersey","New York",
+  "Rhode Island", "Connecticut","Massaschusetts","Louisiana","Arkansas","Minnesota",
+  "Florida","Kansas",
+  "Arizona","California","Colorado","Idaho","Montana","Nebraska",
+  "Nevada","New Mexico","Texas","Oklahoma","Utah","Washington","Wyoming","Hawaii","Alaska"
+  ]
+var states = [
+  "illinois.gif",
+  "iowa.gif",
+  "missouri.gif",
+  "oregon.gif",
+  "michigan.gif",
+  "indiana.gif", "vermont.gif","newhampshire.gif","maine.gif","southdakota.gif","northdakota.gif",
+  "ohio.gif","wisconsin.gif","kentucky.gif","tennessee.gif",
+  "northcarolina.gif","southcarolina.gif","georgia.gif","alabama.gif","mississippi.gif",
+  "virginia.gif","westvirginia.gif","maryland.gif","delaware.gif",
+  "pennsylvania.gif","newjersey.gif","newyork.gif",
+  "rhodeislandbig.gif","connecticut.gif","massachusetts.gif","louisiana.gif","arkansas.gif","minnesota.gif",
+  "florida.gif","kansas.gif",
+  "arizona.gif","california.gif","colorado.gif","idaho.gif","montana.gif","nebraska.gif",
+  "nevada.gif","newmexico.gif","texas.gif","oklahoma.gif","utah.gif","washington.gif","wyoming.gif","hawaii.gif","alaska.gif"
+  ];
+var statesx = [
+  88.65,60.15,65.40,
+  -81.70,90.40,
+  107.40,171.95,181.00,183.00,21.10,22.60,
+  121.70,78.90,103.65,99.40,
+  132.20,138.95,125.45,110.45,93.90,
+  138.95,138.95,151.65,171.95,144.20,174.20,147.95,
+  187.75,179.35,177.60,77.40,73.65,54.15,
+  115.70,32.35,
+  -44.95,-86.85,-8.15,-47.20,-32.15,21.10,
+  -66.70,-11.15,-4.40,22.60, -36.70,-72.50,-15.65,-300.95,-230.30
+  ];
+var statesy = [ 
+ -26.10,-29.85,-8.45,
+ -64.75,-59.05,
+ -22.70,-66.00,-67.30,-85.65,-47.15,-70.30,
+ -27.90,-55.30,-3.60,12.90,
+ 5.20,21.45,26.40,27.90,29.65,
+ -13.20,-17.10,-19.85,-20.85,-36.40,-31.35,-61.30,
+ -41.85,-41.85,-50.85,47.10,21.15,-72.70,
+ 55.45,-2.85,
+ 15.15,-35.75,-11.85,-76.70,-76.30,-23.85,
+ -27.60,18.15,22.65,19.65,-22.35,-83.45,-41.75,31.55,-171.30
+ ];	
+var doingjigsaw = false;
+var bodyel;
+var nums = states.length;
+var stateelements = [];
+var questionfel;
+function init(){
+	bodyelement = document.getElementById("body");
+   setupgame();
+  // msg = document.getElementById("msg");
+   bodyel = document.getElementById("body");
+   
+}
+
+function setupgame() {
+	var i;
+	var x;
+	var y;
+	var uniqueid;
+	var s;
+	for(i=0;i<nums;i++) {
+		uniqueid = "a"+String(i);
+		s = document.createElement('state');
+    	s.innerHTML = (
+	      "<img src='"+states[i]+"' id='"+uniqueid+"'/>");
+		document.body.appendChild(s);	  
+		thingelem = document.getElementById(uniqueid);
+		x = statesx[i] +310;
+		y = statesy[i] + 200;
+		thingelem.style.top = String(y)+"px";
+		thingelem.style.left = String(x)+"px";
+		stateelements.push(thingelem);
+	}
+	questionfel = document.getElementById("questionform");
+	questionfel.style.left = "100px";
+	questionfel.style.top = "500px";
+	questionfel.question.value = " ";
+	questionfel.feedback.value = "  ";
+}
+ function pickstate(ev) {
+ 	var picked = Number(ev.target.id.substr(1)); 
+	if (picked == choice) {
+	questionfel.feedback.value = "Correct!";
+	}
+	else {
+		questionfel.feedback.value = "Try Again.";
+	}
+ }
+function spread() {
+	var i;
+	var x; 
+	var y;
+	var thingelem;
+	for (i=0;i<nums-2;i++) {  //don't move alaska or hawaii
+		
+		x = 2.70*statesx[i] +410;
+		y = 2.70*statesy[i] + 250;
+		thingelem = stateelements[i];
+		thingelem.style.top = String(y)+"px";
+		thingelem.style.left = String(x)+"px";
+	}
+}
+function restore() {
+	var i;
+	var x; 
+	var y;
+	var thingelem;
+	var df;
+	var lsname = "jigsaw";
+	var xydata = [];
+	var stringdata;
+	if (doingjigsaw) {
+		doingjigsaw = false;
+		 d.onmousedown = "";
+         d.onmousemove = "";
+         d.onmouseup = "";
+         df = document.getElementById("fullpage");
+		 bodyel.removeChild(df);
+		 for (i=0;i<nums;i++) {
+			 thingelem = stateelements[i];
+			xydata.push(thingelem.style.top+"&"+thingelem.style.left);
+		 }
+		 stringdata = xydata.join(";");
+		 try {
+		   localStorage.setItem(lsname,stringdata);
+	     }
+		 catch(e) {
+			alert("data not saved, error given: "+e); 
+		 }
+	}
+	for (i=0;i<nums;i++) {
+		x = statesx[i] +310;
+		y = statesy[i] + 200;
+		thingelem = stateelements[i];
+		thingelem.style.top = String(y)+"px";
+		thingelem.style.left = String(x)+"px";
+	}
+}
+function restorepreviousjigsaw() {
+	var i;
+	var lsname = "jigsaw";
+	var xydata;
+	var stringdata;
+	var ss;   //will hold combined top and left for a state
+	var ssarray;
+	var thingelem;
+	try {
+	stringdata = localStorage.getItem(lsname);
+	xydata = stringdata.split(";");
+	for (i=0;i<nums;i++) {
+	  ss = xydata[i];
+	  ssarray = ss.split("&");
+	  thingelem = stateelements[i];
+	  thingelem.style.top = ssarray[0];
+	  thingelem.style.left = ssarray[1];
+	}
+	doingjigsaw = true;
+	stateelements[choice].style.border="";
+	d.onmousedown = startdragging;
+  d.onmousemove = moving;
+  d.onmouseup = release;
+  var df = document.createElement('div');
+  df.id = "fullpage";
+  bodyel.appendChild(df);
+	questionfel.question.value = "";
+	questionfel.submitbut.value = "Save & close jigsaw";
+	questionfel.feedback.value = "  ";
+	questionfel.style.zIndex = 100;}
+	catch(e) {
+		alert("Problem in restoring previous puzzle. Click on Do jigsaw.");}
+}
+var choice = 0;
+function setupfindstate(){
+	var i;
+	var thingelem;
+	stateelements[choice].style.border="";   //removes border of last choice, if there was one
+	choice = Math.floor(Math.random()*nums);
+	for (i=0;i<nums;i++) {
+	 thingelem = stateelements[i];
+	 thingelem.addEventListener('click',pickstate,false);
+	}
+	var nameofstate = names[choice];
+	questionfel.question.value = "Click on "+nameofstate;
+	questionfel.feedback.value = "  ";
+	questionfel.submitbut.value = "";
+}
+function setupidentifystate(){
+	stateelements[choice].style.border="";
+	stateelements[choice].style.zIndex="";
+	choice = Math.floor(Math.random()*nums);
+	stateelements[choice].style.zIndex="20";
+	stateelements[choice].style.border="double";
+	questionfel.question.value = "Type name of state with border HERE";
+	questionfel.submitbut.value = "Submit name";
+	questionfel.feedback.value = "  ";
+	var thingelem;
+	for (i=0;i<nums;i++) {
+	 thingelem = stateelements[i];
+	 thingelem.removeEventListener('click',pickstate,false);
+	}
+}
+function checkname() {
+	if (doingjigsaw) {
+		restore();
+	}
+	else {
+	var correctname = names[choice];
+	var guessedname = document.questionform.question.value;
+	
+	if (guessedname==correctname) {
+		questionfel.feedback.value = "Correct!";
+	}
+	else {
+		questionfel.feedback.value = "Try again.";
+		
+	}
+	return false;
+	}
+}
+function checkpositions() {
+	var i;
+	var x;
+	var y;
+	var tolerance = 20;
+	var deltax = [];
+	var deltay = [];
+	var delx;
+	var dely;
+	for (i=0;i<nums-2;i++) {  //doesn't check alaska or hawaii
+	  x = stateelements[i].style.left;
+	  y = stateelements[i].style.top;
+	  x = x.substr(0,x.length-2); // remove px
+	  y = y.substr(0,y.length-2);
+	  x = Number(x);
+	  y = Number(y);
+	  delx = x - statesx[i];
+	  dely = y - statesy[i];
+	  deltax.push(delx);
+	  deltay.push(dely);
+	}
+	var averagex = doaverage(deltax);
+	var averagey = doaverage(deltay);
+	//check if any delta (x or y) is more than tolerance from average
+	for (i=0;i<nums;i++) {
+		if ((Math.abs(averagex - deltax[i])>tolerance) || (Math.abs(averagey-deltay[i])>tolerance)) {
+			break;
+		}
+	}
+	if (i<nums) {
+		questionfel.feedback.value = names[i]+" and maybe more out of position";
+	}
+	else {
+		//could put in check on Hawaii and Alaska here
+		questionfel.feedback.value = "GOOD";
+	}
+}
+function doaverage(arr) {
+	var sum;
+	var i;
+	var n = arr.length;
+	sum = 0;
+	for(i=0;i<n;i++) {
+	   sum += arr[i];
+	}
+	return (sum/n);
+}
+function setupjigsaw() {
+  doingjigsaw = true;
+	stateelements[choice].style.border="";
+  var i;
+  var x;
+  var y;
+  var thingelem;
+    for (i=0;i<nums;i++) {	
+		x = 100+Math.floor(Math.random()*600);
+		y = 100+Math.floor(Math.random()*320);
+		thingelem = stateelements[i];
+		thingelem.style.top = String(y)+"px";
+		thingelem.style.left = String(x)+"px";
+		thingelem.removeEventListener('click',pickstate,false);
+     }
+  d.onmousedown = startdragging;
+  d.onmousemove = moving;
+  d.onmouseup = release;
+  var df = document.createElement('div');
+  df.id = "fullpage";
+  bodyel.appendChild(df);
+	questionfel.question.value = "";
+	questionfel.submitbut.value = "Save & close jigsaw";
+	questionfel.feedback.value = "  ";
+	questionfel.style.zIndex = 100;
+}
+var d = document;
+var ie= d.all;
+var mouseDown = false;
+var curX;
+var curY;
+var adjustX;
+var adjustY;
+var movingobj;
+function release(e){
+	mouseDown = false;
+	checkpositions();
+};
+function startdragging(e)
+{   
+    var o;
+	var j;
+	var i;
+	curX = ie ? e.clientX+d.body.scrollLeft : e.pageX;
+	curY = ie ? e.clientY+d.body.scrollTop  : e.pageY;
+	//determine what obj, if any, is under mouse
+	for (i=0; i<nums;i++) {
+		j = stateelements[i];
+		o = offset(j);
+		if (curX >= o.x && curX <= o.x + j.width &&
+		     curY >= o.y && curY <= o.y + j.height)
+			{
+				break;
+			}
+	}
+	
+	if (i<nums) {
+		movingobj = stateelements[i];
+		//msg.innerHTML="curX is "+curX+" curY is "+curY;
+		adjustX = curX- o.x;
+		adjustY = curY-  o.y;
+		mouseDown = true;
+	}
+}
+function moving(e)
+{
+	if (!mouseDown) return;
+ 
+	if (ie)
+		draw(e.clientX+d.body.scrollLeft, e.clientY+d.body.scrollTop);
+	else
+		draw(e.pageX, e.pageY);
+}
+function draw(x, y)
+{
+	var js = movingobj.style;
+	js.left = (x - adjustX) + "px";
+	js.top  = (y - adjustY) + "px";
+}
+function offset(obj)
+{
+	var left = 0;
+	var top  = 0;
+	if (obj.offsetParent)
+		do
+		{
+			left += obj.offsetLeft;
+			top  += obj.offsetTop;
+        } while (obj = obj.offsetParent);
+	return {x: left, y: top};
+}
+ 
+
+</script>
+</head>
+<body id="body" onLoad="init();">  
+<button onClick="spread();">Spread out states </button>
+<button onClick="restore();">Restore original /compress map </button>
+<button onClick="setupfindstate();">Find the state </button>
+<button onClick="setupidentifystate();">Name the state</button>
+<button onClick="setupjigsaw();">Do jigsaw</button>
+<button onClick="restorepreviousjigsaw();">Restore last jigsaw in process </button>
+<h1>USA</h1>
+<form id="questionform" name="questionform" onSubmit="return checkname();">
+State name: <input name="question" value="   " size="40"/>
+<input name="submitbut" type="submit" value="       " size="30"/>
+Feedback: <input name="feedback" value="   " size="40" />
+</form>
+</body>
+</html>

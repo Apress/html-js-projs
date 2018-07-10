@@ -1,0 +1,249 @@
+<!DOCTYPE html >
+<html>
+<head>
+<title>Add to 15</title>
+<meta charset="UTF-8">
+<style>
+span {position:absolute; top:180px;    
+   border-style: solid; color: red; border-radius: 25px; background-color: yellow;
+   padding: 5px; cursor: pointer;
+}
+#status { 
+  color: red;
+  font-size: x-large;
+}
+</style>
+
+<script language="Javascript">
+var statusref;
+
+
+
+var numbers = [];   //array of canvas elements
+var game = true;
+var player = [];
+var computer = [];
+var board = [1,2,3,4,5,6,7,8,9];
+
+var wedge = 50;
+var startx = 15;  //pieces lined up vertically
+
+
+var groups = [
+  "  ",               //place holder, not used
+  "3 4 8",
+  "1 5 9",
+  "2 6 7",
+  "1 6 8",
+  "3 5 7",
+  "2 4 9",
+  "2 5 8",
+  "4 5 6"
+];
+
+var occupied = [  //indexed subtracting 1
+  [2, 4],
+  [3, 6, 7],
+  [1, 5],
+  [1, 6, 8],
+  [2, 5, 7, 8],
+  [3, 4, 8],
+  [3, 5],
+  [1, 4, 7],
+  [2, 6]
+];
+
+var pgroupcount = [0,0,0,0,0,0,0,0,0];  //unused first slot
+var cgroupcount = [0,0,0,0,0,0,0,0,0];  //unused first slot
+
+function init() {
+  
+  setUpBoard();
+  statusref=document.getElementById("status");
+  
+}
+
+
+function smartChoice() {
+ //first check for immediate win
+ var boardl = board.length;
+ for (var i=0;i<boardl;i++) {
+    var possible = board[i];
+    for (var j=0;j<occupied[possible-1].length;j++) {
+      if (cgroupcount[occupied[possible-1][j]]==2) {
+         return (i);  
+      }
+    }
+  }
+  // not returned, now check if need to block
+  for (var i=0;i<boardl;i++) {
+    var blocker = board[i];
+    for (var j=0;j<occupied[blocker-1].length;j++) {
+      if (pgroupcount[occupied[blocker-1][j]]==2) {
+        return(i);
+      }
+    }
+  }
+// try for 2 in a row
+  //see if there is a possible in a group with one computer played
+  //and 0 player presence
+   for (var i=0;i<boardl;i++) {
+    var possible = board[i];
+    for (var j=0;j<occupied[possible-1].length;j++) {
+      var whatgroup = occupied[possible-1][j];
+      if ((cgroupcount[whatgroup]==1)&&(pgroupcount[whatgroup]==0 )){
+         return (i);  
+      }
+    }
+  }
+
+
+
+  // if 5 is available, return its position in board
+  for (var i = 0;i<boardl;i++) {
+    if (board[i]==5) {
+      return (i);
+    }
+  }
+  //if corner available, 8,2, 6 or 4, return its position in board
+  //use fact that these numbers are the even ones
+  
+   for (var i = 0;i<boardl;i++) {
+    if (0==board[i]%2) {
+      return (i);
+    }
+  }
+
+  // return random move
+  var ch = Math.floor(Math.random(0,boardl));
+  return (ch);
+}
+function computerMove() {
+   if (board.length<1) {
+     
+      statusref.innerHTML="Cat wins!";
+      
+      return;
+    }
+   var which = smartChoice();
+   
+   var n = board[which];
+   
+   take(n);
+    numbers[n-1].style.top = "150px";
+    numbers[n-1].removeEventListener("click",addToPlayer);
+   computer.push(n);
+   
+   var holder = occupied[n-1];  //holder holds groups with n
+  for (var i=0;i<holder.length;i++) {
+    cgroupcount[holder[i]]++;
+    if (cgroupcount[holder[i]]==3) {
+     statusref.innerHTML ="Computer wins "+groups[holder[i]]; 
+    
+      game = false;  //may not be necessary.
+      return;
+      
+    }
+  }
+  if (board.length<1) {
+      statusref.innerHTML="Cat wins!";
+      
+    }
+  else {  //continue. Turn game back on
+      game = true;
+    }
+  
+  
+}
+
+
+function setUpBoard() {
+ 
+  var dv;
+  var xpos;
+  //create and position pieces for board
+  for (var i=1; i<10; i++) {
+    dv = document.createElement("span");
+    dv.addEventListener("click",addToPlayer);
+    dv.innerHTML = i.toString();
+    xpos = startx + i*wedge;
+    dv.style.left=xpos.toString()+"px";
+    dv.style.top ="240px";
+    document.body.appendChild(dv);
+    dv.n = i;
+    numbers.push(dv);
+    
+  } 
+
+  
+}
+
+
+
+function take(n) {
+   //"takes" the number by removing from board 
+   var nAt = board.indexOf(n);
+  
+  
+   if (nAt>-1) {
+      board.splice(nAt,1);  //remove that element
+
+   }
+ 
+}
+
+function addToPlayer(ev) {
+   
+  if (game) {
+  var nn = ev.target.n;
+  ev.target.removeEventListener("click",addToPlayer);
+  
+  player.push(nn);
+  numbers[nn-1].style.top = "350px";
+  //need to remove which from board
+  take(nn);
+  var holder = occupied[nn-1];  //holder holds groups with which
+  for (i=0;i<holder.length;i++) {
+    pgroupcount[holder[i]]++;
+    if (pgroupcount[holder[i]]==3) {
+      statusref.innerHTML="Player wins "+groups[holder[i]];
+     
+      game = false;
+      return ;
+    }
+  }
+  game = false;  //temporarily stop player moves
+  setTimeout(computerMove,1000); //invoke computermove after a pause
+  
+  }
+  else {
+    
+    statusref.innerHTML="Reload for new game.";
+  }
+}
+
+
+</script>
+<body onLoad="init();">
+<h1>Player against Computer</h1><br>
+
+Player goes first: click on number. First to have a set of 3 adding to 15 wins. Reload for new game.
+<p>
+Computer
+<br><br><br>
+</p>
+<hr/>
+Board
+<br><br><br><br>
+<hr/>
+Player
+<br><br><br><br><br>
+<hr/>
+<div id="status">
+</div>
+
+
+
+
+</body>
+</html>

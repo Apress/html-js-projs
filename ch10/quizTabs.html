@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quiz with Reward!</title>
+<style>
+country {position:absolute;left: 0px; top: 0px; border: 2px; border-style: double; background-color: white; margin: 5px; padding: 3px; visibility:hidden;}
+
+capital {position:absolute;left: 0px; top: 0px; border: 2px; border-style: double; background-color: white; margin: 5px; padding: 3px; visibility:hidden;}
+
+#vid {position:absolute; visibility:hidden; z-index: 0; max-width: 50%; height: auto;}
+
+main {display:block;}
+
+</style>
+    <script type="text/javascript">
+	var facts = [
+	  ["China","Beijing",false],
+	  ["India","New Delhi",false],
+	  ["European Union","Brussels",false],
+	  ["United States","Washington, DC",false],
+	  ["Indonesia","Jakarta",false],
+	  ["Brazil","Brasilia",false],
+	  ["Russia","Moscow",false],
+	  ["Japan","Tokyo",false],
+	  ["Mexico","Mexico City",false],
+	  ["Germany","Berlin",false],
+	  ["Turkey","Ankara",false],
+	  ["France","Paris",false],
+	  ["United Kingdom","London",false],
+	  ["Italy","Rome",false],
+	  ["South Africa","Pretoria",false],
+	  ["South Korea","Seoul",false],
+	  ["Argentina","Buenos Aires",false],
+	  ["Canada","Ottawa",false],
+	  ["Saudi Arabia","Riyadh",false],
+	  ["Australia","Canberra",false]
+	  ];
+
+	var thingelem;
+	var nq = 4;  //number of questions asked in a game
+	var elementinmotion;
+	var makingmove = false;
+	var inbetween = 150;
+	var col1 = 0;
+	var row1;
+	var rowsize = 60;
+	var slots = new Array(nq);
+	
+
+	
+function init(){
+   row1= .6* window.innerHeight;
+   setupgame();  
+} 
+
+function setupgame() {
+
+	var i;
+	var c;
+	var s;
+	var mx = col1;
+	var my = row1;
+	var d;
+	var uniqueid;
+	// mark all facts as not being used.
+	for (i=0;i<facts.length;i++) {
+		facts[i][2] = false;	
+	}
+	for (i=0;i<nq;i++) {
+		slots[i] = -100;
+	}
+	for(i=0;i<nq;i++) {
+
+		do {c = Math.floor(Math.random()*facts.length);}
+		while (facts[c][2]==true) //keep doing while a fact has been taken
+		facts[c][2]=true;  
+		uniqueid = "c"+String(c);
+		
+		d = document.createElement('country');
+    	d.innerHTML = (
+	      "<country tabIndex='"+String(2+i)+"'  id='"+uniqueid+"'>country name</country>");
+		
+		document.body.appendChild(d);
+		thingelem = document.getElementById(uniqueid);
+		thingelem.textContent=facts[c][0];
+
+		thingelem.style.top = String(my)+"px";
+		thingelem.style.left = String(mx)+"px";
+		
+		
+		thingelem.addEventListener('click',pickelement,false);
+		thingelem.addEventListener('keyup',pickelement,false);
+		thingelem.style.visibility="visible";
+		//now do capital 
+		uniqueid = "p"+String(c);
+
+		d = document.createElement('capital');
+    	d.innerHTML = (
+	      "<capital tabIndex='0' id='"+uniqueid+"'>capital name</capital>");  
+	      //will change tabIndex
+		document.body.appendChild(d);	  
+		thingelem = document.getElementById(uniqueid);
+		thingelem.textContent=facts[c][1];
+		// put this thing in random choice from empty slots
+		do {s = Math.floor(Math.random()*nq);}
+		while (slots[s]>=0)   //keep doing while a slot has been taken
+		slots[s]=c;  
+	    thingelem.tabIndex = String(6+s);
+	    
+		thingelem.style.top = String(row1+s*rowsize)+"px";
+		thingelem.style.left = String(col1+inbetween)+"px";
+		thingelem.addEventListener('click',pickelement,false);
+		thingelem.addEventListener('keyup',pickelement,false);
+		thingelem.style.visibility="visible";
+		my +=rowsize;
+	}
+	document.f.score.value = "0";
+
+	return false;
+}
+
+ function pickelement(ev) {
+
+ 	 if (ev.keyCode ===9) {return;}
+	 var thisx; 
+	 var thisxn;
+	 var sc;
+	 if (makingmove) {
+		 if (this==elementinmotion) {
+			 elementinmotion.style.backgroundColor = "white";
+			 makingmove = false;
+			 return;
+		 }
+		 thisx= this.style.left; 
+	 	thisx = thisx.substring(0,thisx.length-2);  //remove the px
+		thisxn = Number(thisx) + 90;
+		 elementinmotion.style.left = String(thisxn)+"px";
+		 elementinmotion.style.top = this.style.top;
+		 makingmove = false;
+		 if (this.id.substring(1)==elementinmotion.id.substring(1)) {
+			 elementinmotion.style.backgroundColor = "gold";
+			 this.style.backgroundColor = "gold";
+			 document.f.out.value = "RIGHT";
+			 sc = 1+Number(document.f.score.value);
+			 document.f.score.value = String(sc);
+			 if (sc==nq) {
+				v = document.getElementById("vid");
+				v.style.top = String(row1+4*rowsize+20)+"px";
+				v.style.visibility = "visible";
+				v.style.zIndex="10000";
+				v.play();
+						 }
+			 }
+		 else {
+			 document.f.out.value = "WRONG";
+			 elementinmotion.style.backgroundColor = "white";
+			 }
+	 }
+	 else {
+		makingmove = true; 
+		elementinmotion = this; 
+		elementinmotion.style.backgroundColor = "tan";
+	 }
+ }
+
+
+</script>
+</head>
+<body onLoad="init();">  
+<main tabIndex="1">	
+<h1>G20 Countries and Capitals </h1><br/>
+
+This is a quiz for matching country and capital. There are 4 countries and 4 capitals.
+Click (or tab and then press enter) to pick a country or capital and then click (or tab and then press enter) on corresponding capital or country. There will be a video (with sound) 
+if you match all 4. 
+
+You can tab through everything repeated times.
+<br/>
+Reload for new game.
+<br/>
+
+<form name="f" >
+Action: <input name="out" type="text" value="RIGHT OR WRONG"/><br/>
+Score: <input name="score" type="text" value="0"/>
+</form>
+</main>
+
+
+<video id="vid" controls="controls"  preload="auto" width="50%" alt="Fireworks video"> 
+<source src="sfire3.webmvp8.webm" type='video/webm; codec="vp8, vorbis"'> 
+<source src="sfire3.mp4"> 
+<source src="sfire3.theora.ogv" type='video/ogg; codecs="theora, vorbis"'> 
+
+Your browser does not accept the video tag.
+ </video>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Video frames bounce</title>
+<meta charset="UTF-8">
+<style>
+
+#vid {position:absolute; display:none; z-index: 0; 
+
+}
+#canvas {position:absolute; z-index:10; top:0px; left:0px;}
+#revbtn {position:absolute; z-index:20; }
+</style>
+    <script type="text/javascript">
+	var ctx;
+	var cwidth ;
+	var cheight ;
+	var ballrad = 50;
+	var maskrad;
+	var ballx = 50;
+	var bally = 60;
+	var canvas1;
+	var ballvx = 2;
+	var ballvy = 4;
+	var v;
+	var videow;
+	var videoh;
+   
+
+
+function init(){
+	canvas1 = document.getElementById('canvas');
+    ctx = canvas1.getContext('2d');
+	canvas1.width = window.innerWidth;
+	cwidth = canvas1.width;
+	canvas1.height = window.innerHeight;
+	cheight = canvas1.height;
+    v = document.getElementById("vid");
+    var aspect= v.videoWidth/v.videoHeight;
+    v.width = Math.min(v.videoWidth,.5*cwidth);
+    v.height =   v.width/aspect;
+    v.height = Math.min(v.height,.5*cheight);
+    v.width = aspect*v.height;
+    window.onscroll = function () {
+		window.scrollTo(0,0);
+	};
+    
+    videow = v.width;
+    videoh = v.height;
+
+   
+
+	ballrad = Math.min(.5*videow,.5*videoh);
+	maskrad = .4*Math.min(videow,videoh);
+	
+	ctx.lineWidth = ballrad;
+    ctx.strokeStyle ="rgb(200,0,50)";
+    ctx.fillStyle="white";  //for testing
+	v.play();
+	setInterval(drawscene,50);
+}
+function drawscene(){
+  ctx.clearRect(0,0,cwidth,cheight);  //clear whole canvas
+
+  checkPosition();
+
+  ctx.drawImage(v,ballx, bally, videow,videoh);  //draws rectangular frame from the video
+
+
+ ctx.beginPath();
+ ctx.moveTo(ballx,bally);
+ ctx.lineTo(ballx+videow+2,bally);
+ ctx.lineTo(ballx+videow+2,bally+.5*videoh+2);
+
+ctx.lineTo(ballx+.5*videow+ballrad, bally+.5*videoh+2);
+ctx.arc(ballx+.5*videow,bally+.5*videoh,ballrad,0,Math.PI,true);
+ ctx.lineTo(ballx,bally+.5*videoh);
+ ctx.lineTo(ballx,bally);
+ ctx.fill();
+ 
+ ctx.closePath();
+ 
+
+ctx.beginPath();
+ ctx.moveTo(ballx,bally+.5*v.height);
+ ctx.lineTo(ballx,bally+v.height);
+ ctx.lineTo(ballx+videow+2,bally+videoh);
+
+ ctx.lineTo(ballx+videow+2,bally+.5*videoh-2);
+ 
+ ctx.lineTo(ballx+.5*videow+ballrad,bally+.5*videoh-2);
+
+
+
+ ctx.arc(ballx+.5*videow,bally+.5*videoHeight,ballrad,0,Math.PI,false);
+ ctx.lineTo(ballx,bally+.5*videoh);
+ 
+ ctx.fill();
+  
+ 
+ ctx.closePath();
+
+ 
+   
+   ctx.strokeRect(0,0,cwidth,cheight);  //box
+}
+
+function checkPosition() {
+	var nballx = ballx + ballvx+.5*videow;  //horizontal coordinate of center, after next move
+	var nbally = bally + ballvy+.5*videoh;  //vertical coordinate of center, after next move
+	
+
+  if (nballx > cwidth) {
+	 ballvx =-ballvx;
+	 nballx = cwidth;
+  }
+  if (nballx < 0) {
+	  
+     nballx = 0;
+	 ballvx = -ballvx;
+  }
+  if (nbally > cheight) {
+	 nbally = cheight;
+	 ballvy =-ballvy;
+  }
+  if (nbally < 0) {
+    nbally = 0;
+	 ballvy = -ballvy;
+  }
+  ballx = nballx-.5*videow;  //make the adjusted move, horizontally
+  bally = nbally-.5*videoh;  //make the adjusted move, vertically
+}
+function reverse() {
+	ballvx = -ballvx;
+	ballvy = -ballvy;
+	
+}
+</script>
+</head>
+
+<body onLoad="init();">
+
+<video id="vid" loop="loop" preload="auto" muted>
+<source src="joshuahomerun.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'>
+<source src="joshuahomerun.webmvp8.webm" type='video/webm; codec="vp8, vorbis"'>    
+<source src="joshuahomerun.theora.ogv" type='video/ogg; codecs="theora, vorbis"'>
+
+Your browser does not accept the video tag.
+ </video>
+<button id="revbtn" onClick="reverse();">Reverse </button><br/> 
+
+<canvas id="canvas" >
+This browser doesn't support the HTML5 canvas element.
+</canvas>
+
+
+</body>
+</html>

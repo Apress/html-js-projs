@@ -1,0 +1,247 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Reveal next</title>
+<meta name="viewport"
+content="width=device-width, user-scalable=yes, initial-scale=1.0, minimum-scale=1.0, maximum-scale=2.0" />
+<meta charset="UTF-8">
+<style>
+body {
+	 font-family: Garamond, serif;
+	 font-size: 24px;
+	 overflow: hidden;
+      }
+div#images {display:none;}
+</style>
+
+<script>
+var ctx;
+var fudge = 40;
+var canvas;
+var pwidth;
+var pheight;
+var cwidth;
+var cheight;
+var current = 0;
+var prev = 3;
+var next = 1;
+var rect;
+var revealflag = false;
+var lastdrawn;
+var lasty;
+var moving = false;
+var canvases = [];
+var fontsz = ["14px","16px","18px","20px","24px"];
+
+function init() {
+  var fs;
+  canvas=document.getElementById("canvas");
+  bodyel = document.getElementById("body");
+  
+  ctx = canvas.getContext("2d");
+  ctx.font = "24px serif";
+  cwidth = window.innerWidth;
+  cheight = window.innerHeight;
+  fs = Math.floor (cwidth/200);
+  fs = Math.min(fs,4);
+  bodyel.style.fontSize = fontsz[fs];
+  canvas.width = cwidth;
+  canvas.height= cheight;
+  rect = canvas.getBoundingClientRect();
+  var noOfImgs = document.getElementsByTagName('img').length;
+  
+  setupimages("noodles", noOfImgs);
+  canvas.addEventListener("mousedown",startreveal,true);
+  canvas.addEventListener("touchstart", touchHandler, true);
+  canvas.addEventListener("touchmove", touchHandler, true);
+  canvas.addEventListener("touchend", touchHandler, true);
+  canvas.addEventListener("touchcancel", touchHandler, true);
+  ctx.drawImage(canvases[0],0,0);
+  current = 0;
+  prev = 3;  //these are indexing into canvases array
+  next = 1;
+}
+
+function setupimages (base, lim){
+  var dref;
+  var can;
+  var canctx;
+  canvases = [];  
+  var img;
+  dref = document.getElementById("dummy");
+   
+  if (dref.naturalWidth) {
+       dref.width = dref.naturalWidth;
+       pratio = dref.naturalHeight / dref.naturalWidth;
+   }
+   else {   
+        pratio = dref.height /dref.width;
+   }
+  
+   dref.width = Math.min(dref.width,cwidth-fudge);
+   dref.height = pratio * dref.width;
+   dref.height = Math.min(dref.height,cheight-fudge);
+   dref.width = dref.height * (1/pratio);
+   pwidth = dref.width;
+   pheight = dref.height;
+  for(var i=1;i<=lim;i++){  //names of image files use 1,2,3,4
+    img = new Image();
+	  img.width = pwidth;
+    img.height = pheight;
+    img.src=base+String(i)+".jpg";
+    can = document.createElement("canvas");
+    can.width = cwidth;
+    can.height = cheight;
+    canctx = can.getContext('2d');
+    canctx.drawImage(img,0,0,pwidth,pheight);
+    canvases.push(can); 
+  }
+}
+
+
+function touchHandler(event)
+{
+  var touches = event.changedTouches;
+  if (touches.length>1) {
+    return false;
+  }
+  var first = touches[0];
+  var type = "";
+  switch(event.type)
+    {
+        case "touchstart": type = "mousedown"; break;
+        case "touchmove":  type="mousemove"; break;
+        case "touchend":   type="mouseup"; break;
+        default: return;
+    }
+ 
+ 
+  var simulatedEvent = new MouseEvent(type,{
+     //cancelable: true,
+     screenX: first.screenX,
+     screenY: first.screenY,
+     clientX: first.clientX,
+     clientY: first.clientY
+  });
+
+    first.target.dispatchEvent(simulatedEvent);
+    event.preventDefault();
+}
+
+function getCoords(ev){   
+    var mx;
+    var my;
+    mx = ev.clientX-rect.left;
+    my = ev.clientY-rect.top;
+    return [mx,my];
+}
+
+function startreveal(ev){
+   var startxy = getCoords(ev);
+   if (startxy[0]>pwidth) return;
+   if (staryxy[1]>pheight) return;
+   lasty = Math.max(startxy[1],fudge);
+   canvas.addEventListener("mousemove",revealing,true);
+   canvas.addEventListener("mouseup",stopreveal,true);
+   canvas.removeEventListener("mousedown",startreveal,true);
+   revealflag = true;
+   
+ }
+ 
+ function revealing(ev){
+  
+  var slice;
+  var curxy;
+  if (!revealflag) return;
+  curxy = getCoords(ev);
+  cury = curxy[1];
+ 
+  if (moving){
+    if (cury>=lasty){
+      if (cury<(pheight-fudge)){
+        slice = Math.max(1,cury-lasty);  //minimum slice
+        ctx.drawImage(canvases[next],0,lasty,pwidth,slice,0,lasty,pwidth,slice);
+        lastdrawn = next;
+        lasty = cury;
+        }
+        else {
+         lastdrawn = next;
+         stopreveal(ev);  // ev passed to be consist with being eventhandler
+        }
+      }   //closes cury>lasty
+    else {
+      if (cury>fudge){
+         slice = Math.max(1,lasty-cury);  //set minimum slice
+         ctx.drawImage(canvases[prev],0,cury,pwidth,slice,0,cury,pwidth,slice);
+         lastdrawn = prev;
+         lasty = cury;
+         
+      }
+      else {
+         lastdrawn = prev;
+         stopreveal(ev);
+      }
+    }  //closes else for cury>lasty
+  }  //closes if moving
+  else {   //first move
+    moving = true;
+    if (cury>=lasty){
+       prev = current;
+        if (cury<(pheight-fudge)){
+        slice = Math.max(1,cury-lasty);  //set minimum slice
+        ctx.drawImage(canvases[next],0,lasty,pwidth,slice,0,lasty,pwidth,slice);
+        lastdrawn = next;
+        lasty = cury;
+        }
+        else {
+         lastdrawn = next;
+         stopreveal(ev);  // ev passed to be consist with being eventhandler
+        }
+      }  //closes cury>lasty for moving false
+    else {
+      next = current;
+      if (cury>fudge){
+         slice = Math.max(1,lasty-cury);  //set minimum slice
+         ctx.drawImage(canvases[prev],0,cury,pwidth,slice,0,cury,pwidth,slice);
+         lastdrawn= prev;
+         lasty = cury;
+      }
+      else {
+         lastdrawn = prev;
+         stopreveal(ev);
+      }  // closes else for if cury?fudge
+    }  //closes else for cury>lasty
+  }  //closes else for if moving
+}  //closes function
+
+function stopreveal(ev) {
+ 
+  revealflag = false;
+  moving = false;
+ 
+  ctx.drawImage(canvases[lastdrawn],0,0);
+  current = lastdrawn;
+  next = current+1;
+  if (next==canvases.length) next = 0;
+  prev = current-1;
+  if (prev<0) prev=canvases.length-1;
+  canvas.removeEventListener("mousemove",revealing,true);
+  canvas.removeEventListener("mouseup",stopreveal,true);
+  canvas.addEventListener("mousedown",startreveal,true);
+}
+
+</script>
+  <body id="body" onload="init();" onresize="init();">
+
+    Mouse/touch down, slowly drag mouse/finger down or up the photo, then mouse/touch up.
+ <canvas id="canvas" width="100%" height="50%" >
+ 	Your browser doesn't support canvas
+ </canvas>
+<div id="images">
+ <img src="noodles1.jpg" id="dummy"/>
+ <img src="noodles2.jpg">
+ <img src="noodles3.jpg">
+ <img src="noodles4.jpg">
+ </div>
+  </body>
+ </html>
